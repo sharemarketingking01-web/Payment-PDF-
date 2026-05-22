@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TradeGuru — Receipt Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,500;6..12,600&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #04080f;
+      --bg2: #070d17;
+      --surface: #0c1624;
+      --surface2: #111d2e;
+      --border: rgba(255,255,255,0.08);
+      --gold: #f0b429;
+      --green: #00c896;
+      --text: #e8edf5;
+      --muted: #7a8fa8;
+      --font-head: 'Poppins', sans-serif;
+      --font-body: 'Nunito Sans', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+    }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-family: var(--font-head);
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .logo span { color: var(--gold); }
+
+    .topbar-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ── LAYOUT ── */
+    .app {
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      min-height: calc(100vh - 61px);
+    }
+
+    /* ── FORM PANEL ── */
+    .form-panel {
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      padding: 28px 24px;
+      overflow-y: auto;
+      height: calc(100vh - 61px);
+      position: sticky;
+      top: 0;
+    }
+
+    .form-section-title {
+      font-family: var(--font-head);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 24px 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .form-section-title:first-of-type { margin-top: 0; }
+
+    .form-group { margin-bottom: 14px; }
+
+    label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 6px;
+      letter-spacing: 0.3px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 0.88rem;
+      padding: 10px 12px;
+      outline: none;
+      transition: border-color 0.2s;
+      appearance: none;
+    }
+    input:focus, select:focus { border-color: var(--gold); }
+    input::placeholder { color: rgba(255,255,255,0.2); }
+
+    select option { background: #0c1624; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .btn-group { display: flex; gap: 10px; margin-top: 24px; }
+
+    .btn-generate {
+      flex: 1;
+      padding: 13px;
+      background: linear-gradient(135deg, var(--gold), #e6a010);
+      color: #000;
+      font-family: var(--font-head);
+      font-size: 0.88rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-generate:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(240,180,41,0.3); }
+
+    .btn-download {
+      flex: 1;
+      padding: 13px;
+      background: var(--green);
+      color: #000;
+      font-family: var(--font-head);
+      font-size: 0.88rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-download:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,200,150,0.3); }
+
+    .btn-reset {
+      padding: 13px 16px;
+      background: transparent;
+      color: var(--muted);
+      font-family: var(--font-head);
+      font-size: 0.88rem;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-reset:hover { border-color: rgba(255,255,255,0.25); color: var(--text); }
+
+    .auto-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--gold);
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      float: right;
+      margin-top: -2px;
+      transition: background 0.2s;
+    }
+    .auto-btn:hover { background: rgba(240,180,41,0.1); }
+
+    /* ── PREVIEW PANEL ── */
+    .preview-panel {
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 40px 24px;
+      overflow-y: auto;
+    }
+
+    .preview-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 28px;
+      align-self: flex-start;
+    }
+
+    /* ── RECEIPT ── */
+    #receipt {
+      background: #ffffff;
+      width: 420px;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .receipt-header {
+      background: linear-gradient(135deg, #0a1628, #1a3a5c);
+      padding: 32px 28px 28px;
+      text-align: center;
+      position: relative;
+    }
+
+    .receipt-header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px; left: 0; right: 0;
+      height: 20px;
+      background: #ffffff;
+      border-radius: 20px 20px 0 0;
+    }
+
+    .receipt-logo-text {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.3px;
+      margin-bottom: 20px;
+    }
+    .receipt-logo-text span { color: #f0b429; }
+
+    .receipt-tick {
+      width: 64px; height: 64px;
+      background: linear-gradient(135deg, #00c896, #00a87a);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      box-shadow: 0 8px 24px rgba(0,200,150,0.4);
+    }
+
+    .receipt-tick svg { width: 32px; height: 32px; }
+
+    .receipt-status {
+      color: #ffffff;
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .receipt-amount-label {
+      color: rgba(255,255,255,0.5);
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .receipt-amount {
+      color: #ffffff;
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -1px;
+    }
+
+    .receipt-body {
+      background: #ffffff;
+      padding: 28px 28px 24px;
+    }
+
+    .receipt-plan-badge {
+      display: inline-block;
+      background: #fff8e6;
+      border: 1px solid #f0b429;
+      color: #b8860b;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 100px;
+      margin-bottom: 20px;
+    }
+
+    .receipt-divider {
+      height: 1px;
+      background: #f0f4f8;
+      margin: 16px 0;
+    }
+
+    .receipt-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 8px 0;
+      gap: 16px;
+    }
+
+    .receipt-row-label {
+      font-size: 0.78rem;
+      color: #8fa0b8;
+      font-weight: 500;
+      flex-shrink: 0;
+      min-width: 120px;
+    }
+
+    .receipt-row-value {
+      font-size: 0.82rem;
+      color: #1a2a3a;
+      font-weight: 600;
+      text-align: right;
+      word-break: break-all;
+    }
+
+    .receipt-ref {
+      background: #f8fafc;
+      border: 1px dashed #d0dae8;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin: 16px 0;
+      text-align: center;
+    }
+
+    .receipt-ref-label {
+      font-size: 0.68rem;
+      color: #8fa0b8;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .receipt-ref-value {
+      font-size: 0.85rem;
+      color: #1a2a3a;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .receipt-footer {
+      background: #f8fafc;
+      border-top: 1px solid #f0f4f8;
+      padding: 16px 28px;
+      text-align: center;
+    }
+
+    .receipt-footer-brand {
+      font-size: 0.78rem;
+      color: #8fa0b8;
+      margin-bottom: 4px;
+    }
+
+    .receipt-footer-brand strong {
+      color: #1a2a3a;
+      font-weight: 600;
+    }
+
+    .receipt-footer-note {
+      font-size: 0.68rem;
+      color: #b0bec5;
+      line-height: 1.5;
+    }
+
+    .receipt-sebi {
+      background: #f0f4f8;
+      padding: 10px 28px;
+      text-align: center;
+      font-size: 0.62rem;
+      color: #aab8c8;
+      line-height: 1.5;
+      border-top: 1px solid #e8edf4;
+    }
+
+    /* ── STATUS MESSAGES ── */
+    .status-msg {
+      margin-top: 20px;
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      display: none;
+    }
+    .status-msg.success {
+      background: rgba(0,200,150,0.1);
+      border: 1px solid rgba(0,200,150,0.3);
+      color: var(--green);
+      display: block;
+    }
+    .status-msg.error {
+      background: rgba(255,82,82,0.1);
+      border: 1px solid rgba(255,82,82,0.3);
+      color: #ff5252;
+      display: block;
+    }
+
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      .form-panel { height: auto; position: static; }
+      .preview-panel { padding: 24px 16px; }
+      #receipt { width: 100%; max-width: 420px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">Trade<span>Guru</span></div>
+  <div class="topbar-label">Receipt Generator</div>
+</div>
+
+<div class="app">
+
+  <!-- ── FORM PANEL ── -->
+  <div class="form-panel">
+
+    <div class="form-section-title">Customer Details</div>
+
+    <div class="form-group">
+      <label>Full Name</label>
+      <input type="text" id="f-name" placeholder="Rahul Kapoor" oninput="liveUpdate()"/>
+    </div>
+    <div class="form-group">
+      <label>Email Address</label>
+      <input type="email" id="f-email" placeholder="rahul@email.com" oninput="liveUpdate()"/>
+    </div>
+    <div class="form-group">
+      <label>Mobile Number</label>
+      <input type="tel" id="f-phone" placeholder="9876543210" maxlength="10" oninput="liveUpdate()"/>
+    </div>
+
+    <div class="form-section-title">Plan & Payment</div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Plan</label>
+        <select id="f-plan" onchange="liveUpdate()">
+          <option value="Basic Plan">Basic</option>
+          <option value="Pro Plan" selected>Pro</option>
+          <option value="Elite Plan">Elite</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Billing</label>
+        <select id="f-billing" onchange="liveUpdate()">
+          <option value="Monthly">Monthly</option>
+          <option value="Yearly">Yearly</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Amount (₹) — excluding GST</label>
+      <input type="number" id="f-amount" placeholder="299" oninput="liveUpdate()"/>
+    </div>
+
+    <div class="form-group">
+      <label>Payment Method</label>
+      <select id="f-method" onchange="liveUpdate()">
+        <option value="UPI">UPI</option>
+        <option value="Credit Card">Credit Card</option>
+        <option value="Debit Card">Debit Card</option>
+        <option value="Net Banking">Net Banking</option>
+      </select>
+    </div>
+
+    <div class="form-section-title">Transaction Details</div>
+
+    <div class="form-group">
+      <label>
+        Payment ID
+        <button class="auto-btn" onclick="autoPaymentId()">Auto Generate</button>
+      </label>
+      <input type="text" id="f-payid" placeholder="pay_XXXXXXXXXXXXXXXX" oninput="liveUpdate()"/>
+    </div>
+
+    <div class="form-group">
+      <label>
+        Transaction Reference No.
+        <button class="auto-btn" onclick="autoRefNo()">Auto Generate</button>
+      </label>
+      <input type="text" id="f-refno" placeholder="TRX2025XXXXXXXXXX" oninput="liveUpdate()"/>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="f-date" oninput="liveUpdate()"/>
+      </div>
+      <div class="form-group">
+        <label>Time</label>
+        <input type="time" id="f-time" oninput="liveUpdate()"/>
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn-download" onclick="downloadPDF()">⬇ Download PDF</button>
+      <button class="btn-reset" onclick="resetForm()">↺</button>
+    </div>
+
+    <div id="status-msg" class="status-msg"></div>
+
+  </div>
+
+  <!-- ── PREVIEW PANEL ── -->
+  <div class="preview-panel">
+    <div class="preview-label">Live Receipt Preview</div>
+
+    <div id="receipt">
+
+      <!-- HEADER -->
+      <div class="receipt-header">
+        <div class="receipt-logo-text">Trade<span>Guru</span></div>
+        <div class="receipt-tick">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div class="receipt-status">Payment Successful</div>
+      </div>
+
+      <!-- BODY -->
+      <div class="receipt-body">
+
+        <div style="text-align:center; margin-bottom: 4px;">
+          <div class="receipt-amount-label">Amount Paid</div>
+          <div class="receipt-amount" id="r-amount">₹353.00</div>
+          <div style="font-size:0.68rem;color:#aab8c8;margin-top:4px;">Incl. 18% GST</div>
+        </div>
+
+        <div class="receipt-divider"></div>
+
+        <div style="text-align:center; margin-bottom:16px;">
+          <div class="receipt-plan-badge" id="r-plan-badge">Pro Plan — Monthly</div>
+        </div>
+
+        <div class="receipt-row">
+          <div class="receipt-row-label">Customer Name</div>
+          <div class="receipt-row-value" id="r-name">—</div>
+        </div>
+        <div class="receipt-row">
+          <div class="receipt-row-label">Email</div>
+          <div class="receipt-row-value" id="r-email">—</div>
+        </div>
+        <div class="receipt-row">
+          <div class="receipt-row-label">Mobile</div>
+          <div class="receipt-row-value" id="r-phone">—</div>
+        </div>
+
+        <div class="receipt-divider"></div>
+
+        <div class="receipt-row">
+          <div class="receipt-row-label">Payment Method</div>
+          <div class="receipt-row-value" id="r-method">UPI</div>
+        </div>
+        <div class="receipt-row">
+          <div class="receipt-row-label">Payment ID</div>
+          <div class="receipt-row-value" id="r-payid">—</div>
+        </div>
+        <div class="receipt-row">
+          <div class="receipt-row-label">Date & Time</div>
+          <div class="receipt-row-value" id="r-datetime">—</div>
+        </div>
+
+        <div class="receipt-ref">
+          <div class="receipt-ref-label">Transaction Reference Number</div>
+          <div class="receipt-ref-value" id="r-refno">—</div>
+        </div>
+
+      </div>
+
+      <!-- FOOTER -->
+      <div class="receipt-footer">
+        <div class="receipt-footer-brand">
+          Powered by <strong>TradeGuru</strong> &nbsp;·&nbsp; support@tradeguru.in
+        </div>
+        <div class="receipt-footer-note">
+          This is a computer-generated receipt and does not require a signature.
+        </div>
+      </div>
+
+      <div class="receipt-sebi">
+        Investment in securities is subject to market risks. TradeGuru is a SEBI registered entity.
+        SEBI Reg. No. INZ000XXXXXX | NSE Member | BSE Member
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ── SET DEFAULTS ON LOAD ── */
+  window.addEventListener('load', () => {
+    const now = new Date();
+    document.getElementById('f-date').value = now.toISOString().split('T')[0];
+    document.getElementById('f-time').value = now.toTimeString().slice(0,5);
+    autoPaymentId();
+    autoRefNo();
+    liveUpdate();
+  });
+
+  /* ── AUTO GENERATORS ── */
+  function autoPaymentId() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let id = 'pay_';
+    for (let i = 0; i < 16; i++) id += chars[Math.floor(Math.random() * chars.length)];
+    document.getElementById('f-payid').value = id;
+    liveUpdate();
+  }
+
+  function autoRefNo() {
+    const now = new Date();
+    const yr  = now.getFullYear();
+    const mo  = String(now.getMonth() + 1).padStart(2, '0');
+    const dy  = String(now.getDate()).padStart(2, '0');
+    const rnd = Math.floor(Math.random() * 9000000000) + 1000000000;
+    document.getElementById('f-refno').value = `TRX${yr}${mo}${dy}${rnd}`;
+    liveUpdate();
+  }
+
+  /* ── LIVE UPDATE ── */
+  function liveUpdate() {
+    const name    = document.getElementById('f-name').value    || '—';
+    const email   = document.getElementById('f-email').value   || '—';
+    const phone   = document.getElementById('f-phone').value   || '—';
+    const plan    = document.getElementById('f-plan').value;
+    const billing = document.getElementById('f-billing').value;
+    const amount  = parseFloat(document.getElementById('f-amount').value);
+    const method  = document.getElementById('f-method').value;
+    const payid   = document.getElementById('f-payid').value   || '—';
+    const refno   = document.getElementById('f-refno').value   || '—';
+    const date    = document.getElementById('f-date').value;
+    const time    = document.getElementById('f-time').value;
+
+    // Amount with GST
+    const total = amount ? (amount * 1.18).toFixed(2) : '0.00';
+    document.getElementById('r-amount').textContent = `₹${total}`;
+
+    // Plan badge
+    document.getElementById('r-plan-badge').textContent = `${plan} — ${billing}`;
+
+    // Customer
+    document.getElementById('r-name').textContent    = name;
+    document.getElementById('r-email').textContent   = email;
+    document.getElementById('r-phone').textContent   = phone ? `+91 ${phone}` : '—';
+
+    // Payment
+    document.getElementById('r-method').textContent  = method;
+    document.getElementById('r-payid').textContent   = payid;
+    document.getElementById('r-refno').textContent   = refno;
+
+    // Date & Time
+    if (date && time) {
+      const d = new Date(`${date}T${time}`);
+      const opts = { day: '2-digit', month: 'short', year: 'numeric' };
+      const dateStr = d.toLocaleDateString('en-IN', opts);
+      const timeStr = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+      document.getElementById('r-datetime').textContent = `${dateStr}, ${timeStr}`;
+    }
+  }
+
+  /* ── DOWNLOAD PDF ── */
+  async function downloadPDF() {
+    const btn = document.querySelector('.btn-download');
+    const statusEl = document.getElementById('status-msg');
+    btn.textContent = 'Generating...';
+    btn.disabled = true;
+    statusEl.className = 'status-msg';
+
+    try {
+      const receipt = document.getElementById('receipt');
+
+      const canvas = await html2canvas(receipt, {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const { jsPDF } = window.jspdf;
+
+      const pdfW = 105; // A6 width in mm (half of A4)
+      const pdfH = (canvas.height * pdfW) / canvas.width;
+
+      const pdf = new jsPDF({
+        orientation: pdfH > pdfW ? 'portrait' : 'landscape',
+        unit: 'mm',
+        format: [pdfW, pdfH]
+      });
+
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH);
+
+      const name = document.getElementById('f-name').value.replace(/\s+/g, '_') || 'customer';
+      const date = document.getElementById('f-date').value || 'receipt';
+      pdf.save(`TradeGuru_Receipt_${name}_${date}.pdf`);
+
+      statusEl.textContent = '✓ Receipt downloaded successfully!';
+      statusEl.className = 'status-msg success';
+
+    } catch (err) {
+      statusEl.textContent = '✕ Download failed. Please try again.';
+      statusEl.className = 'status-msg error';
+      console.error(err);
+    }
+
+    btn.textContent = '⬇ Download PDF';
+    btn.disabled = false;
+    setTimeout(() => { statusEl.className = 'status-msg'; }, 4000);
+  }
+
+  /* ── RESET ── */
+  function resetForm() {
+    ['f-name','f-email','f-phone','f-amount'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('f-plan').value    = 'Pro Plan';
+    document.getElementById('f-billing').value = 'Monthly';
+    document.getElementById('f-method').value  = 'UPI';
+    const now = new Date();
+    document.getElementById('f-date').value = now.toISOString().split('T')[0];
+    document.getElementById('f-time').value = now.toTimeString().slice(0,5);
+    autoPaymentId();
+    autoRefNo();
+    liveUpdate();
+  }
+</script>
+</body>
+</html>
