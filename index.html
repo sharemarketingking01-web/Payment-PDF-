@@ -61,17 +61,15 @@
         .preview-label {font-size: 0.72rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 28px; align-self: flex-start; }
         
         /* ── RECEIPT ── */
-        #receipt {background: #ffffff; width: 420px; border-radius: 20px; overflow: hidden; box-shadow: 0 32px 80px rgba(0,0,0,0.5); font-family: 'Poppins', sans-serif; padding-bottom: 12px; }
+        #receipt {background: #ffffff; width: 420px; border-radius: 20px; overflow: hidden; box-shadow: 0 32px 80px rgba(0,0,0,0.5); font-family: 'Poppins', sans-serif; padding-bottom: 24px; }
         .receipt-header {background: linear-gradient(135deg, #0a1628, #1a3a5c); padding: 32px 28px 28px; text-align: center; position: relative; }
         .receipt-header::after {content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 20px; background: #ffffff; border-radius: 20px 20px 0 0; }
-        .receipt-logo-text {font-family: 'Poppins', sans-serif; font-size: 1.4rem; font-weight: 700; color: #ffffff; letter-spacing: -0.3px; margin-bottom: 20px; }
-        .receipt-logo-text span { color: #f0b429; }
         .receipt-tick {width: 64px; height: 64px; background: linear-gradient(135deg, #00c896, #00a87a); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; box-shadow: 0 8px 24px rgba(0,200,150,0.4); }
         .receipt-tick svg { width: 32px; height: 32px; }
         .receipt-status {color: #ffffff; font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
         .receipt-amount-label {color: rgba(255,255,255,0.5); font-size: 0.72rem; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
         .receipt-amount {color: #ffffff; font-size: 2.4rem; font-weight: 700; letter-spacing: -1px; }
-        .receipt-body {background: #ffffff; padding: 28px 28px 12px; }
+        .receipt-body {background: #ffffff; padding: 12px 28px 12px; }
         .receipt-divider {height: 1px; background: #f0f4f8; margin: 16px 0; }
         .receipt-row {display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 0; gap: 16px; }
         .receipt-row-label {font-size: 0.78rem; color: #8fa0b8; font-weight: 500; flex-shrink: 0; min-width: 120px; }
@@ -95,7 +93,7 @@
 </head>
 <body>
     <div class="topbar">
-        <div class="logo"><span></span></div>
+        <div class="logo">Trade<span>Guru</span></div>
         <div class="topbar-label">Receipt Generator</div>
     </div>
     <div class="app">
@@ -107,7 +105,7 @@
             </div>
             <div class="form-group">
                 <label>Account</label>
-                <input type="text" id="f-account" placeholder="1234567890" oninput="liveUpdate()"/>
+                <input type="text" id="f-account" placeholder="1234567890" maxlength="12" oninput="liveUpdate()"/>
             </div>
             <div class="form-group">
                 <label>IFSC</label>
@@ -177,7 +175,6 @@
             <div class="preview-label">Live Receipt Preview</div>
             <div id="receipt">
                 <div class="receipt-header">
-                    <div class="receipt-logo-text">Malik<span>Mumbai</span></div>
                     <div class="receipt-tick">
                         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="20 6 9 17 4 12"/>
@@ -193,7 +190,6 @@
                             <span style="font-size:0.72rem;color:#8fa0b8;font-weight:500;">Paid</span>
                             <span style="font-size:0.78rem;color:#1a2a3a;font-weight:700;" id="r-base">&#8377;0.00</span>
                         </div>
-                        <div style="font-size:0.68rem;color:#aab8c8;margin-top:6px;">Incl. 18% GST (<span id="r-gst">₹0.00</span>)</div>
                     </div>
                     <div class="receipt-divider"></div>
                     <div class="receipt-row">
@@ -202,7 +198,7 @@
                     </div>
                     <div class="receipt-row">
                         <div class="receipt-row-label">Account</div>
-                        <div class="receipt-row-value" id="r-account">—</div>
+                        <div class="receipt-row-value" id="r-account">********0000</div>
                     </div>
                     <div class="receipt-row">
                         <div class="receipt-row-label">IFSC</div>
@@ -231,6 +227,9 @@
     </div>
     
     <script>
+        // Holds a persistent random 4-digit number to use when input is empty
+        let fallbackRandomDigits = String(Math.floor(1000 + Math.random() * 9000));
+
         /* ── SET DEFAULTS ON LOAD ── */
         window.addEventListener('load', () => {
             const now = new Date();
@@ -274,24 +273,21 @@
             const date    = document.getElementById('f-date').value;
             const time    = document.getElementById('f-time').value;
             
-            // Mask Account Number to only show last 4 digits
-            let maskedAccount = '—';
+            // Mask Account Number logic: Always write 8 * followed by last 4 digits
+            let maskedAccount = '********' + fallbackRandomDigits;
             if (account) {
-                if (account.length > 4) {
-                    maskedAccount = '*'.repeat(account.length - 4) + account.slice(-4);
-                } else {
-                    maskedAccount = account;
+                const cleanDigits = account.replace(/\D/g, ''); // retain only digits
+                if (cleanDigits.length > 0) {
+                    maskedAccount = '********' + cleanDigits.slice(-4).padStart(4, '0');
                 }
             }
             
-            // Amount with GST
+            // Amount Calculations
             const base = amount ? amount.toFixed(2) : '0.00';
-            const gst  = amount ? (amount * 0.18).toFixed(2) : '0.00';
             const total = amount ? (amount * 1.18).toFixed(2) : '0.00';
             
             document.getElementById('r-amount').textContent = `₹${total}`;
             document.getElementById('r-base').textContent   = `₹${base}`;
-            document.getElementById('r-gst').textContent    = `₹${gst}`;
             
             // Customer Details Preview
             document.getElementById('r-name').textContent    = name;
@@ -375,7 +371,6 @@
                     statusEl.textContent = '✓ Shared successfully!';
                     statusEl.className = 'status-msg success';
                 } else {
-                    // Fallback if browser file sharing isn't fully supported
                     const imgUrl = URL.createObjectURL(blob);
                     const altWin = window.open(imgUrl, '_blank');
                     if(altWin) {
@@ -404,6 +399,9 @@
             document.getElementById('f-plan').value    = 'Pro Plan';
             document.getElementById('f-billing').value = 'Monthly';
             document.getElementById('f-method').value  = 'UPI';
+            
+            // Re-roll random account number fallback on form refresh
+            fallbackRandomDigits = String(Math.floor(1000 + Math.random() * 9000));
             
             const now = new Date();
             document.getElementById('f-date').value = now.toISOString().split('T')[0];
