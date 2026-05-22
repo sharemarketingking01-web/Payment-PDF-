@@ -432,11 +432,11 @@
       <input type="text" id="f-name" placeholder="Rahul Kapoor" oninput="liveUpdate()"/>
     </div>
     <div class="form-group">
-      <label>Email Address</label>
-      <input type="email" id="f-email" placeholder="rahul@email.com" oninput="liveUpdate()"/>
+      <label>Account</label>
+      <input type="number" id="f-email" placeholder="number" oninput="liveUpdate()"/>
     </div>
     <div class="form-group">
-      <label>Mobile Number</label>
+      <label>IFSC</label>
       <input type="tel" id="f-phone" placeholder="9876543210" maxlength="10" oninput="liveUpdate()"/>
     </div>
 
@@ -468,10 +468,10 @@
     <div class="form-group">
       <label>Payment Method</label>
       <select id="f-method" onchange="liveUpdate()">
+        <option value="IMPS">IMPS</option>
+        <option value="NEFT">NEFT</option>
+        <option value="RTGS">RTGS</option>
         <option value="UPI">UPI</option>
-        <option value="Credit Card">Credit Card</option>
-        <option value="Debit Card">Debit Card</option>
-        <option value="Net Banking">Net Banking</option>
       </select>
     </div>
 
