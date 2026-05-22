@@ -17,6 +17,7 @@
             --border: rgba(255,255,255,0.08);
             --gold: #f0b429;
             --green: #00c896;
+            --blue: #38bdf8;
             --text: #e8edf5;
             --muted: #7a8fa8;
             --font-head: 'Poppins', sans-serif;
@@ -44,10 +45,12 @@
         input::placeholder { color: rgba(255,255,255,0.2); }
         select option { background: #0c1624; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn-group { display: flex; gap: 10px; margin-top: 24px; }
         
-        .btn-download {flex: 1; padding: 13px; background: var(--green); color: #000; font-family: var(--font-head); font-size: 0.88rem; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .btn-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+        .btn-download {flex: 1; min-width: 140px; padding: 13px; background: var(--green); color: #000; font-family: var(--font-head); font-size: 0.88rem; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
         .btn-download:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,200,150,0.3); }
+        .btn-share {flex: 1; min-width: 110px; padding: 13px; background: var(--blue); color: #000; font-family: var(--font-head); font-size: 0.88rem; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .btn-share:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(56,189,248,0.3); }
         .btn-reset {padding: 13px 16px; background: transparent; color: var(--muted); font-family: var(--font-head); font-size: 0.88rem; font-weight: 600; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
         .btn-reset:hover { border-color: rgba(255,255,255,0.25); color: var(--text); }
         .auto-btn {background: none; border: 1px solid var(--border); color: var(--gold); font-size: 0.72rem; font-weight: 600; padding: 3px 10px; border-radius: 4px; cursor: pointer; float: right; margin-top: -2px; transition: background 0.2s; }
@@ -58,7 +61,7 @@
         .preview-label {font-size: 0.72rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 28px; align-self: flex-start; }
         
         /* ── RECEIPT ── */
-        #receipt {background: #ffffff; width: 420px; border-radius: 20px; overflow: hidden; box-shadow: 0 32px 80px rgba(0,0,0,0.5); font-family: 'Poppins', sans-serif; }
+        #receipt {background: #ffffff; width: 420px; border-radius: 20px; overflow: hidden; box-shadow: 0 32px 80px rgba(0,0,0,0.5); font-family: 'Poppins', sans-serif; padding-bottom: 12px; }
         .receipt-header {background: linear-gradient(135deg, #0a1628, #1a3a5c); padding: 32px 28px 28px; text-align: center; position: relative; }
         .receipt-header::after {content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 20px; background: #ffffff; border-radius: 20px 20px 0 0; }
         .receipt-logo-text {font-family: 'Poppins', sans-serif; font-size: 1.4rem; font-weight: 700; color: #ffffff; letter-spacing: -0.3px; margin-bottom: 20px; }
@@ -68,7 +71,7 @@
         .receipt-status {color: #ffffff; font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
         .receipt-amount-label {color: rgba(255,255,255,0.5); font-size: 0.72rem; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
         .receipt-amount {color: #ffffff; font-size: 2.4rem; font-weight: 700; letter-spacing: -1px; }
-        .receipt-body {background: #ffffff; padding: 28px 28px 24px; }
+        .receipt-body {background: #ffffff; padding: 28px 28px 12px; }
         .receipt-divider {height: 1px; background: #f0f4f8; margin: 16px 0; }
         .receipt-row {display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 0; gap: 16px; }
         .receipt-row-label {font-size: 0.78rem; color: #8fa0b8; font-weight: 500; flex-shrink: 0; min-width: 120px; }
@@ -76,11 +79,6 @@
         .receipt-ref {background: #f8fafc; border: 1px dashed #d0dae8; border-radius: 8px; padding: 12px 16px; margin: 16px 0; text-align: center; }
         .receipt-ref-label {font-size: 0.68rem; color: #8fa0b8; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
         .receipt-ref-value {font-size: 0.85rem; color: #1a2a3a; font-weight: 700; letter-spacing: 0.5px; font-family: 'Courier New', monospace; }
-        .receipt-footer {background: #f8fafc; border-top: 1px solid #f0f4f8; padding: 16px 28px; text-align: center; }
-        .receipt-footer-brand {font-size: 0.78rem; color: #8fa0b8; margin-bottom: 4px; }
-        .receipt-footer-brand strong {color: #1a2a3a; font-weight: 600; }
-        .receipt-footer-note {font-size: 0.68rem; color: #b0bec5; line-height: 1.5; }
-        .receipt-sebi {background: #f0f4f8; padding: 10px 28px; text-align: center; font-size: 0.62rem; color: #aab8c8; line-height: 1.5; border-top: 1px solid #e8edf4; }
         
         /* ── STATUS MESSAGES ── */
         .status-msg {margin-top: 20px; padding: 12px 18px; border-radius: 8px; font-size: 0.82rem; font-weight: 500; display: none; }
@@ -97,7 +95,7 @@
 </head>
 <body>
     <div class="topbar">
-        <div class="logo">Malik<span>Mumbai</span></div>
+        <div class="logo"><span></span></div>
         <div class="topbar-label">Receipt Generator</div>
     </div>
     <div class="app">
@@ -169,6 +167,7 @@
             </div>
             <div class="btn-group">
                 <button class="btn-download" onclick="downloadPDF()">⬇ Download PDF</button>
+                <button class="btn-share" onclick="shareReceipt()">🔗 Share</button>
                 <button class="btn-reset" onclick="resetForm()">↺</button>
             </div>
             <div id="status-msg" class="status-msg"></div>
@@ -227,11 +226,6 @@
                         <div class="receipt-ref-value" id="r-refno">—</div>
                     </div>
                 </div>
-                <div class="receipt-footer">
-                    <div class="receipt-footer-brand"> Powered by <strong>MalikMumbai</strong> &nbsp;·&nbsp; support@tradeguru.in </div>
-                    <div class="receipt-footer-note"> This is a computer-generated receipt and does not require a signature. </div>
-                </div>
-                <div class="receipt-sebi"> Investment in securities is subject to market risks. MalikMumbai is a SEBI registered entity. SEBI Reg. No. INZ000XXXXXX | NSE Member | BSE Member </div>
             </div>
         </div>
     </div>
@@ -269,7 +263,7 @@
         /* ── LIVE UPDATE ── */
         function liveUpdate() {
             const name    = document.getElementById('f-name').value    || '—';
-            const account = document.getElementById('f-account').value || '—';
+            const account = document.getElementById('f-account').value;
             const ifsc    = document.getElementById('f-ifsc').value    || '—';
             const plan    = document.getElementById('f-plan').value;
             const billing = document.getElementById('f-billing').value;
@@ -279,6 +273,16 @@
             const refno   = document.getElementById('f-refno').value   || '—';
             const date    = document.getElementById('f-date').value;
             const time    = document.getElementById('f-time').value;
+            
+            // Mask Account Number to only show last 4 digits
+            let maskedAccount = '—';
+            if (account) {
+                if (account.length > 4) {
+                    maskedAccount = '*'.repeat(account.length - 4) + account.slice(-4);
+                } else {
+                    maskedAccount = account;
+                }
+            }
             
             // Amount with GST
             const base = amount ? amount.toFixed(2) : '0.00';
@@ -291,7 +295,7 @@
             
             // Customer Details Preview
             document.getElementById('r-name').textContent    = name;
-            document.getElementById('r-account').textContent = account;
+            document.getElementById('r-account').textContent = maskedAccount;
             document.getElementById('r-ifsc').textContent    = ifsc;
             
             // Payment Details Preview
@@ -309,6 +313,13 @@
             }
         }
         
+        /* ── GENERATE IMAGE/BLOB FOR UTILITIES ── */
+        async function captureReceiptBlob() {
+            const receipt = document.getElementById('receipt');
+            const canvas = await html2canvas(receipt, {scale: 3, useCORS: true, backgroundColor: '#ffffff', logging: false });
+            return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        }
+
         /* ── DOWNLOAD PDF ── */
         async function downloadPDF() {
             const btn = document.querySelector('.btn-download');
@@ -343,6 +354,48 @@
             setTimeout(() => { statusEl.className = 'status-msg'; }, 4000);
         }
         
+        /* ── SHARE FUNCTION ── */
+        async function shareReceipt() {
+            const btn = document.querySelector('.btn-share');
+            const statusEl = document.getElementById('status-msg');
+            btn.textContent = 'Processing...';
+            btn.disabled = true;
+
+            try {
+                const blob = await captureReceiptBlob();
+                const name = document.getElementById('f-name').value.replace(/\s+/g, '_') || 'customer';
+                const file = new File([blob], `Receipt_${name}.png`, { type: 'image/png' });
+
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: 'TradeGuru Payment Receipt',
+                        text: `Payment Receipt for ${name.replace(/_/g, ' ')}`
+                    });
+                    statusEl.textContent = '✓ Shared successfully!';
+                    statusEl.className = 'status-msg success';
+                } else {
+                    // Fallback if browser file sharing isn't fully supported
+                    const imgUrl = URL.createObjectURL(blob);
+                    const altWin = window.open(imgUrl, '_blank');
+                    if(altWin) {
+                        statusEl.textContent = '✓ Opened image in a new tab to share/save manually.';
+                        statusEl.className = 'status-msg success';
+                    } else {
+                        throw new Error('Popup blocked');
+                    }
+                }
+            } catch (err) {
+                statusEl.textContent = '✕ Sharing failed or cancelled.';
+                statusEl.className = 'status-msg error';
+                console.error(err);
+            }
+
+            btn.textContent = '🔗 Share';
+            btn.disabled = false;
+            setTimeout(() => { statusEl.className = 'status-msg'; }, 4000);
+        }
+
         /* ── RESET ── */
         function resetForm() {
             ['f-name','f-account','f-ifsc','f-amount'].forEach(id => {
