@@ -68,11 +68,15 @@
         .receipt-tick svg { width: 32px; height: 32px; }
         .receipt-status {color: #ffffff; font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
         
-        /* Receipt Note Styling */
         .receipt-note { font-size: 0.78rem; color: #64748b; font-weight: 500; max-width: 280px; margin: 0 auto 12px; line-height: 1.4; font-style: italic; display: none; }
-        
         .receipt-amount-label {color: #8fa0b8; font-size: 0.72rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
         .receipt-amount {color: #1a2a3a; font-size: 2.4rem; font-weight: 700; letter-spacing: -1px; line-height: 1.1; }
+        
+        /* Dynamic Inline Status Badge styling */
+        .receipt-badge-container { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; border-radius: 8px; padding: 6px 14px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.3s ease; }
+        .badge-success { background: #e6fcf5; border: 1px solid #c3fae8; color: #0ca678; }
+        .badge-failed { background: #fff5f5; border: 1px solid #ffe3e3; color: #e03131; }
+
         .receipt-body {background: #ffffff; padding: 0 28px 12px; }
         .receipt-divider {height: 1px; background: #f0f4f8; margin: 16px 0; }
         .receipt-row {display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 0; gap: 16px; }
@@ -205,13 +209,10 @@
                 <div class="receipt-body">
                     <div style="text-align:center; margin-top: 10px; margin-bottom: 4px;">
                         <div class="receipt-note" id="r-note"></div>
-                        
                         <div class="receipt-amount-label" id="r-amount-label">Amount Paid</div>
                         <div class="receipt-amount" id="r-amount">₹0.00</div>
-                        <div style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;background:#f8fafc;border:1px solid #e8edf4;border-radius:8px;padding:7px 14px;">
-                            <span style="font-size:0.72rem;color:#8fa0b8;font-weight:500;" id="r-paid-badge">Paid</span>
-                            <span style="font-size:0.78rem;color:#1a2a3a;font-weight:700;" id="r-base">₹0.00</span>
-                        </div>
+                        
+                        <div id="r-status-badge" class="receipt-badge-container badge-success">Paid</div>
                     </div>
                     <div class="receipt-divider"></div>
                     <div class="receipt-row">
@@ -306,10 +307,9 @@
                 }
             }
 
-            const base = amount ? amount.toFixed(2) : '0.00';
-            const total = amount ? (amount * 1.18).toFixed(2) : '0.00';
-            document.getElementById('r-amount').textContent = `₹${total}`;
-            document.getElementById('r-base').textContent   = `₹${base}`;
+            // Fixed amount parsing logic (Removed multiplication miscalculation)
+            const baseValue = amount ? amount.toFixed(2) : '0.00';
+            document.getElementById('r-amount').textContent = `₹${baseValue}`;
 
             document.getElementById('r-name').textContent    = name;
             document.getElementById('r-account').textContent = maskedAccount;
@@ -320,7 +320,6 @@
             document.getElementById('r-payid').textContent        = payid;
             document.getElementById('r-refno').textContent        = refno;
 
-            // Handle Dynamic Comment Display
             const noteEl = document.getElementById('r-note');
             if (noteText.trim()) {
                 noteEl.textContent = noteText;
@@ -341,15 +340,19 @@
             const tickEl = document.querySelector('.receipt-tick');
             const statusTextEl = document.querySelector('.receipt-status');
             const amountLabelEl = document.getElementById('r-amount-label');
-            const paidBadgeEl = document.getElementById('r-paid-badge');
+            const statusBadgeEl = document.getElementById('r-status-badge');
 
             if (status === 'failed') {
                 headerEl.style.background = 'linear-gradient(135deg, #2c0b0e, #4a151b)';
                 tickEl.style.background = 'linear-gradient(135deg, #ff5252, #c62828)';
                 tickEl.style.boxShadow = '0 8px 24px rgba(255,82,82,0.4)';
                 statusTextEl.textContent = 'Payment Unsuccessful';
-                amountLabelEl.textContent = 'TOTAL PROFIT';
-                paidBadgeEl.textContent = 'Failed';
+                amountLabelEl.textContent = 'Amount Unpaid';
+                
+                // Swap badge theme to red Unpaid text
+                statusBadgeEl.textContent = 'Unpaid';
+                statusBadgeEl.className = 'receipt-badge-container badge-failed';
+
                 tickEl.innerHTML = `
                     <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -362,7 +365,11 @@
                 tickEl.style.boxShadow = '0 8px 24px rgba(0,200,150,0.4)';
                 statusTextEl.textContent = 'Payment Successful';
                 amountLabelEl.textContent = 'Amount Paid';
-                paidBadgeEl.textContent = 'Paid';
+                
+                // Swap badge theme to green Paid text
+                statusBadgeEl.textContent = 'Paid';
+                statusBadgeEl.className = 'receipt-badge-container badge-success';
+
                 tickEl.innerHTML = `
                     <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="20 6 9 17 4 12"/>
