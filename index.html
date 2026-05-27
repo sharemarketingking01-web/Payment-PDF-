@@ -45,7 +45,6 @@
         input::placeholder { color: rgba(255,255,255,0.2); }
         select option { background: #0c1624; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        
         .btn-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
         .btn-download {flex: 1; min-width: 140px; padding: 13px; background: var(--green); color: #000; font-family: var(--font-head); font-size: 0.88rem; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
         .btn-download:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,200,150,0.3); }
@@ -62,9 +61,9 @@
         
         /* ── RECEIPT ── */
         #receipt {background: #ffffff; width: 420px; border-radius: 20px; overflow: hidden; box-shadow: 0 32px 80px rgba(0,0,0,0.5); font-family: 'Poppins', sans-serif; padding-bottom: 24px; }
-        .receipt-header {background: linear-gradient(135deg, #0a1628, #1a3a5c); padding: 32px 28px 28px; text-align: center; position: relative; }
+        .receipt-header {background: linear-gradient(135deg, #0a1628, #1a3a5c); padding: 32px 28px 28px; text-align: center; position: relative; transition: background 0.3s ease; }
         .receipt-header::after {content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 20px; background: #ffffff; border-radius: 20px 20px 0 0; }
-        .receipt-tick {width: 64px; height: 64px; background: linear-gradient(135deg, #00c896, #00a87a); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; box-shadow: 0 8px 24px rgba(0,200,150,0.4); }
+        .receipt-tick {width: 64px; height: 64px; background: linear-gradient(135deg, #00c896, #00a87a); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; box-shadow: 0 8px 24px rgba(0,200,150,0.4); transition: background 0.3s ease, box-shadow 0.3s ease; }
         .receipt-tick svg { width: 32px; height: 32px; }
         .receipt-status {color: #ffffff; font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
         .receipt-amount-label {color: rgba(255,255,255,0.5); font-size: 0.72rem; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
@@ -146,6 +145,13 @@
             
             <div class="form-section-title">Transaction Details</div>
             <div class="form-group">
+                <label>Payment Status</label>
+                <select id="f-status" onchange="liveUpdate()">
+                    <option value="success" selected>Successful</option>
+                    <option value="failed">Unsuccessful</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <label> Payment ID <button class="auto-btn" onclick="autoPaymentId()">Auto Generate</button> </label>
                 <input type="text" id="f-payid" placeholder="pay_XXXXXXXXXXXXXXXX" oninput="liveUpdate()"/>
             </div>
@@ -163,6 +169,7 @@
                     <input type="time" id="f-time" oninput="liveUpdate()"/>
                 </div>
             </div>
+            
             <div class="btn-group">
                 <button class="btn-download" onclick="downloadPDF()">⬇ Download PDF</button>
                 <button class="btn-share" onclick="shareReceipt()">🔗 Share</button>
@@ -184,11 +191,11 @@
                 </div>
                 <div class="receipt-body">
                     <div style="text-align:center; margin-bottom: 4px;">
-                        <div class="receipt-amount-label">Amount Paid</div>
-                        <div class="receipt-amount" id="r-amount">&#8377;0.00</div>
+                        <div class="receipt-amount-label" id="r-amount-label">Amount Paid</div>
+                        <div class="receipt-amount" id="r-amount">₹0.00</div>
                         <div style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;background:#f8fafc;border:1px solid #e8edf4;border-radius:8px;padding:7px 14px;">
-                            <span style="font-size:0.72rem;color:#8fa0b8;font-weight:500;">Paid</span>
-                            <span style="font-size:0.78rem;color:#1a2a3a;font-weight:700;" id="r-base">&#8377;0.00</span>
+                            <span style="font-size:0.72rem;color:#8fa0b8;font-weight:500;" id="r-paid-badge">Paid</span>
+                            <span style="font-size:0.78rem;color:#1a2a3a;font-weight:700;" id="r-base">₹0.00</span>
                         </div>
                     </div>
                     <div class="receipt-divider"></div>
@@ -225,7 +232,7 @@
             </div>
         </div>
     </div>
-    
+
     <script>
         // Holds a persistent random 4-digit number to use when input is empty
         let fallbackRandomDigits = String(Math.floor(1000 + Math.random() * 9000));
@@ -239,7 +246,7 @@
             autoRefNo();
             liveUpdate();
         });
-        
+
         /* ── AUTO GENERATORS ── */
         function autoPaymentId() {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -248,7 +255,7 @@
             document.getElementById('f-payid').value = id;
             liveUpdate();
         }
-        
+
         function autoRefNo() {
             const now = new Date();
             const yr  = now.getFullYear();
@@ -258,7 +265,7 @@
             document.getElementById('f-refno').value = `TRX${yr}${mo}${dy}${rnd}`;
             liveUpdate();
         }
-        
+
         /* ── LIVE UPDATE ── */
         function liveUpdate() {
             const name    = document.getElementById('f-name').value    || '—';
@@ -273,6 +280,9 @@
             const date    = document.getElementById('f-date').value;
             const time    = document.getElementById('f-time').value;
             
+            // Get chosen status value
+            const status  = document.getElementById('f-status').value;
+
             // Mask Account Number logic: Always write 8 * followed by last 4 digits
             let maskedAccount = '********' + fallbackRandomDigits;
             if (account) {
@@ -281,24 +291,23 @@
                     maskedAccount = '********' + cleanDigits.slice(-4).padStart(4, '0');
                 }
             }
-            
+
             // Amount Calculations
             const base = amount ? amount.toFixed(2) : '0.00';
             const total = amount ? (amount * 1.18).toFixed(2) : '0.00';
-            
             document.getElementById('r-amount').textContent = `₹${total}`;
             document.getElementById('r-base').textContent   = `₹${base}`;
-            
+
             // Customer Details Preview
             document.getElementById('r-name').textContent    = name;
             document.getElementById('r-account').textContent = maskedAccount;
             document.getElementById('r-ifsc').textContent    = ifsc;
-            
+
             // Payment Details Preview
             document.getElementById('r-method').textContent  = method;
             document.getElementById('r-payid').textContent   = payid;
             document.getElementById('r-refno').textContent   = refno;
-            
+
             // Date & Time formatting
             if (date && time) {
                 const d = new Date(`${date}T${time}`);
@@ -307,8 +316,48 @@
                 const timeStr = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
                 document.getElementById('r-datetime').textContent = `${dateStr}, ${timeStr}`;
             }
+
+            // ── DYNAMIC STATUS MANIPULATION ──
+            const headerEl = document.querySelector('.receipt-header');
+            const tickEl = document.querySelector('.receipt-tick');
+            const statusTextEl = document.querySelector('.receipt-status');
+            const amountLabelEl = document.getElementById('r-amount-label');
+            const paidBadgeEl = document.getElementById('r-paid-badge');
+
+            if (status === 'failed') {
+                // Change header styling to a rich, dark burgundy tone
+                headerEl.style.background = 'linear-gradient(135deg, #2c0b0e, #4a151b)';
+                // Turn badge round wrapper into full Red
+                tickEl.style.background = 'linear-gradient(135deg, #ff5252, #c62828)';
+                tickEl.style.boxShadow = '0 8px 24px rgba(255,82,82,0.4)';
+                // Change state layout content to Unsuccessful
+                statusTextEl.textContent = 'Payment Unsuccessful';
+                amountLabelEl.textContent = 'Amount Due';
+                paidBadgeEl.textContent = 'Failed';
+                // Swap dynamic inner canvas SVG to a clean 'X' cross
+                tickEl.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                `;
+            } else {
+                // Default Successful layout states (Navy Blue header / Green badge)
+                headerEl.style.background = 'linear-gradient(135deg, #0a1628, #1a3a5c)';
+                tickEl.style.background = 'linear-gradient(135deg, #00c896, #00a87a)';
+                tickEl.style.boxShadow = '0 8px 24px rgba(0,200,150,0.4)';
+                statusTextEl.textContent = 'Payment Successful';
+                amountLabelEl.textContent = 'Amount Paid';
+                paidBadgeEl.textContent = 'Paid';
+                // Swap dynamic inner canvas SVG to Checkmark
+                tickEl.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                `;
+            }
         }
-        
+
         /* ── GENERATE IMAGE/BLOB FOR UTILITIES ── */
         async function captureReceiptBlob() {
             const receipt = document.getElementById('receipt');
@@ -323,7 +372,6 @@
             btn.textContent = 'Generating...';
             btn.disabled = true;
             statusEl.className = 'status-msg';
-            
             try {
                 const receipt = document.getElementById('receipt');
                 const canvas = await html2canvas(receipt, {scale: 3, useCORS: true, backgroundColor: '#ffffff', logging: false });
@@ -332,12 +380,10 @@
                 const pdfW = 105; // A6 width in mm
                 const pdfH = (canvas.height * pdfW) / canvas.width;
                 const pdf = new jsPDF({orientation: pdfH > pdfW ? 'portrait' : 'landscape', unit: 'mm', format: [pdfW, pdfH] });
-                
                 pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH);
                 const name = document.getElementById('f-name').value.replace(/\s+/g, '_') || 'customer';
                 const date = document.getElementById('f-date').value || 'receipt';
                 pdf.save(`TradeGuru_Receipt_${name}_${date}.pdf`);
-                
                 statusEl.textContent = '✓ Receipt downloaded successfully!';
                 statusEl.className = 'status-msg success';
             } catch (err) {
@@ -349,25 +395,19 @@
             btn.disabled = false;
             setTimeout(() => { statusEl.className = 'status-msg'; }, 4000);
         }
-        
+
         /* ── SHARE FUNCTION ── */
         async function shareReceipt() {
             const btn = document.querySelector('.btn-share');
             const statusEl = document.getElementById('status-msg');
             btn.textContent = 'Processing...';
             btn.disabled = true;
-
             try {
                 const blob = await captureReceiptBlob();
                 const name = document.getElementById('f-name').value.replace(/\s+/g, '_') || 'customer';
                 const file = new File([blob], `Receipt_${name}.png`, { type: 'image/png' });
-
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        files: [file],
-                        title: 'TradeGuru Payment Receipt',
-                        text: `Payment Receipt for ${name.replace(/_/g, ' ')}`
-                    });
+                    await navigator.share({files: [file], title: 'TradeGuru Payment Receipt', text: `Payment Receipt for ${name.replace(/_/g, ' ')}` });
                     statusEl.textContent = '✓ Shared successfully!';
                     statusEl.className = 'status-msg success';
                 } else {
@@ -385,7 +425,6 @@
                 statusEl.className = 'status-msg error';
                 console.error(err);
             }
-
             btn.textContent = '🔗 Share';
             btn.disabled = false;
             setTimeout(() => { statusEl.className = 'status-msg'; }, 4000);
@@ -399,10 +438,9 @@
             document.getElementById('f-plan').value    = 'Pro Plan';
             document.getElementById('f-billing').value = 'Monthly';
             document.getElementById('f-method').value  = 'UPI';
-            
-            // Re-roll random account number fallback on form refresh
+            document.getElementById('f-status').value  = 'success'; // Revert back to Successful on clear
+
             fallbackRandomDigits = String(Math.floor(1000 + Math.random() * 9000));
-            
             const now = new Date();
             document.getElementById('f-date').value = now.toISOString().split('T')[0];
             document.getElementById('f-time').value = now.toTimeString().slice(0,5);
