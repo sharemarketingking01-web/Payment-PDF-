@@ -41,8 +41,9 @@
         .form-group { margin-bottom: 14px; }
         label {display: block; font-size: 0.78rem; font-weight: 600; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.3px; }
         input, select, textarea {width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--font-body); font-size: 0.88rem; padding: 10px 12px; outline: none; transition: border-color 0.2s; appearance: none; }
-        input:focus, select:focus { border-color: var(--gold); }
-        input::placeholder { color: rgba(255,255,255,0.2); }
+        input:focus, select:focus, textarea:focus { border-color: var(--gold); }
+        input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.2); }
+        textarea { resize: vertical; min-height: 60px; }
         select option { background: #0c1624; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .btn-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
@@ -66,9 +67,13 @@
         .receipt-tick {width: 64px; height: 64px; background: linear-gradient(135deg, #00c896, #00a87a); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; box-shadow: 0 8px 24px rgba(0,200,150,0.4); transition: background 0.3s ease, box-shadow 0.3s ease; }
         .receipt-tick svg { width: 32px; height: 32px; }
         .receipt-status {color: #ffffff; font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
-        .receipt-amount-label {color: rgba(255,255,255,0.5); font-size: 0.72rem; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
-        .receipt-amount {color: #ffffff; font-size: 2.4rem; font-weight: 700; letter-spacing: -1px; }
-        .receipt-body {background: #ffffff; padding: 12px 28px 12px; }
+        
+        /* Receipt Note Styling */
+        .receipt-note { font-size: 0.78rem; color: #64748b; font-weight: 500; max-width: 280px; margin: 0 auto 12px; line-height: 1.4; font-style: italic; display: none; }
+        
+        .receipt-amount-label {color: #8fa0b8; font-size: 0.72rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+        .receipt-amount {color: #1a2a3a; font-size: 2.4rem; font-weight: 700; letter-spacing: -1px; line-height: 1.1; }
+        .receipt-body {background: #ffffff; padding: 0 28px 12px; }
         .receipt-divider {height: 1px; background: #f0f4f8; margin: 16px 0; }
         .receipt-row {display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 0; gap: 16px; }
         .receipt-row-label {font-size: 0.78rem; color: #8fa0b8; font-weight: 500; flex-shrink: 0; min-width: 120px; }
@@ -142,6 +147,14 @@
                     <option value="UPI">UPI</option>
                 </select>
             </div>
+            <div class="form-group">
+                <label>From Account (Bank/UPI ID)</label>
+                <input type="text" id="f-from-account" placeholder="HDFC Bank OOO1 or user@upi" oninput="liveUpdate()"/>
+            </div>
+            <div class="form-group">
+                <label>Comment / Note (Above Amount)</label>
+                <textarea id="f-note" placeholder="Thank you for choosing TradeGuru Premium services!" oninput="liveUpdate()"></textarea>
+            </div>
             
             <div class="form-section-title">Transaction Details</div>
             <div class="form-group">
@@ -190,7 +203,9 @@
                     <div class="receipt-status">Payment Successful</div>
                 </div>
                 <div class="receipt-body">
-                    <div style="text-align:center; margin-bottom: 4px;">
+                    <div style="text-align:center; margin-top: 10px; margin-bottom: 4px;">
+                        <div class="receipt-note" id="r-note"></div>
+                        
                         <div class="receipt-amount-label" id="r-amount-label">Amount Paid</div>
                         <div class="receipt-amount" id="r-amount">₹0.00</div>
                         <div style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;background:#f8fafc;border:1px solid #e8edf4;border-radius:8px;padding:7px 14px;">
@@ -217,6 +232,10 @@
                         <div class="receipt-row-value" id="r-method">UPI</div>
                     </div>
                     <div class="receipt-row">
+                        <div class="receipt-row-label">From Account</div>
+                        <div class="receipt-row-value" id="r-from-account">—</div>
+                    </div>
+                    <div class="receipt-row">
                         <div class="receipt-row-label">Payment ID</div>
                         <div class="receipt-row-value" id="r-payid">—</div>
                     </div>
@@ -234,10 +253,8 @@
     </div>
 
     <script>
-        // Holds a persistent random 4-digit number to use when input is empty
         let fallbackRandomDigits = String(Math.floor(1000 + Math.random() * 9000));
 
-        /* ── SET DEFAULTS ON LOAD ── */
         window.addEventListener('load', () => {
             const now = new Date();
             document.getElementById('f-date').value = now.toISOString().split('T')[0];
@@ -247,7 +264,6 @@
             liveUpdate();
         });
 
-        /* ── AUTO GENERATORS ── */
         function autoPaymentId() {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
             let id = 'pay_';
@@ -266,49 +282,53 @@
             liveUpdate();
         }
 
-        /* ── LIVE UPDATE ── */
         function liveUpdate() {
-            const name    = document.getElementById('f-name').value    || '—';
-            const account = document.getElementById('f-account').value;
-            const ifsc    = document.getElementById('f-ifsc').value    || '—';
-            const plan    = document.getElementById('f-plan').value;
-            const billing = document.getElementById('f-billing').value;
-            const amount  = parseFloat(document.getElementById('f-amount').value);
-            const method  = document.getElementById('f-method').value;
-            const payid   = document.getElementById('f-payid').value   || '—';
-            const refno   = document.getElementById('f-refno').value   || '—';
-            const date    = document.getElementById('f-date').value;
-            const time    = document.getElementById('f-time').value;
-            
-            // Get chosen status value
-            const status  = document.getElementById('f-status').value;
+            const name        = document.getElementById('f-name').value    || '—';
+            const account     = document.getElementById('f-account').value;
+            const ifsc        = document.getElementById('f-ifsc').value    || '—';
+            const plan        = document.getElementById('f-plan').value;
+            const billing     = document.getElementById('f-billing').value;
+            const amount      = parseFloat(document.getElementById('f-amount').value);
+            const method      = document.getElementById('f-method').value;
+            const fromAccount = document.getElementById('f-from-account').value || '—';
+            const noteText    = document.getElementById('f-note').value;
+            const payid       = document.getElementById('f-payid').value   || '—';
+            const refno       = document.getElementById('f-refno').value   || '—';
+            const date        = document.getElementById('f-date').value;
+            const time        = document.getElementById('f-time').value;
+            const status      = document.getElementById('f-status').value;
 
-            // Mask Account Number logic: Always write 8 * followed by last 4 digits
             let maskedAccount = '********' + fallbackRandomDigits;
             if (account) {
-                const cleanDigits = account.replace(/\D/g, ''); // retain only digits
+                const cleanDigits = account.replace(/\D/g, ''); 
                 if (cleanDigits.length > 0) {
                     maskedAccount = '********' + cleanDigits.slice(-4).padStart(4, '0');
                 }
             }
 
-            // Amount Calculations
             const base = amount ? amount.toFixed(2) : '0.00';
             const total = amount ? (amount * 1.18).toFixed(2) : '0.00';
             document.getElementById('r-amount').textContent = `₹${total}`;
             document.getElementById('r-base').textContent   = `₹${base}`;
 
-            // Customer Details Preview
             document.getElementById('r-name').textContent    = name;
             document.getElementById('r-account').textContent = maskedAccount;
             document.getElementById('r-ifsc').textContent    = ifsc;
 
-            // Payment Details Preview
-            document.getElementById('r-method').textContent  = method;
-            document.getElementById('r-payid').textContent   = payid;
-            document.getElementById('r-refno').textContent   = refno;
+            document.getElementById('r-method').textContent       = method;
+            document.getElementById('r-from-account').textContent  = fromAccount;
+            document.getElementById('r-payid').textContent        = payid;
+            document.getElementById('r-refno').textContent        = refno;
 
-            // Date & Time formatting
+            // Handle Dynamic Comment Display
+            const noteEl = document.getElementById('r-note');
+            if (noteText.trim()) {
+                noteEl.textContent = noteText;
+                noteEl.style.display = 'block';
+            } else {
+                noteEl.style.display = 'none';
+            }
+
             if (date && time) {
                 const d = new Date(`${date}T${time}`);
                 const opts = { day: '2-digit', month: 'short', year: 'numeric' };
@@ -317,7 +337,6 @@
                 document.getElementById('r-datetime').textContent = `${dateStr}, ${timeStr}`;
             }
 
-            // ── DYNAMIC STATUS MANIPULATION ──
             const headerEl = document.querySelector('.receipt-header');
             const tickEl = document.querySelector('.receipt-tick');
             const statusTextEl = document.querySelector('.receipt-status');
@@ -325,16 +344,12 @@
             const paidBadgeEl = document.getElementById('r-paid-badge');
 
             if (status === 'failed') {
-                // Change header styling to a rich, dark burgundy tone
                 headerEl.style.background = 'linear-gradient(135deg, #2c0b0e, #4a151b)';
-                // Turn badge round wrapper into full Red
                 tickEl.style.background = 'linear-gradient(135deg, #ff5252, #c62828)';
                 tickEl.style.boxShadow = '0 8px 24px rgba(255,82,82,0.4)';
-                // Change state layout content to Unsuccessful
                 statusTextEl.textContent = 'Payment Unsuccessful';
                 amountLabelEl.textContent = 'Amount Due';
                 paidBadgeEl.textContent = 'Failed';
-                // Swap dynamic inner canvas SVG to a clean 'X' cross
                 tickEl.innerHTML = `
                     <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -342,14 +357,12 @@
                     </svg>
                 `;
             } else {
-                // Default Successful layout states (Navy Blue header / Green badge)
                 headerEl.style.background = 'linear-gradient(135deg, #0a1628, #1a3a5c)';
                 tickEl.style.background = 'linear-gradient(135deg, #00c896, #00a87a)';
                 tickEl.style.boxShadow = '0 8px 24px rgba(0,200,150,0.4)';
                 statusTextEl.textContent = 'Payment Successful';
                 amountLabelEl.textContent = 'Amount Paid';
                 paidBadgeEl.textContent = 'Paid';
-                // Swap dynamic inner canvas SVG to Checkmark
                 tickEl.innerHTML = `
                     <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="20 6 9 17 4 12"/>
@@ -358,14 +371,12 @@
             }
         }
 
-        /* ── GENERATE IMAGE/BLOB FOR UTILITIES ── */
         async function captureReceiptBlob() {
             const receipt = document.getElementById('receipt');
             const canvas = await html2canvas(receipt, {scale: 3, useCORS: true, backgroundColor: '#ffffff', logging: false });
             return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
         }
 
-        /* ── DOWNLOAD PDF ── */
         async function downloadPDF() {
             const btn = document.querySelector('.btn-download');
             const statusEl = document.getElementById('status-msg');
@@ -377,7 +388,7 @@
                 const canvas = await html2canvas(receipt, {scale: 3, useCORS: true, backgroundColor: '#ffffff', logging: false });
                 const imgData = canvas.toDataURL('image/png');
                 const { jsPDF } = window.jspdf;
-                const pdfW = 105; // A6 width in mm
+                const pdfW = 105; 
                 const pdfH = (canvas.height * pdfW) / canvas.width;
                 const pdf = new jsPDF({orientation: pdfH > pdfW ? 'portrait' : 'landscape', unit: 'mm', format: [pdfW, pdfH] });
                 pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH);
@@ -396,7 +407,6 @@
             setTimeout(() => { statusEl.className = 'status-msg'; }, 4000);
         }
 
-        /* ── SHARE FUNCTION ── */
         async function shareReceipt() {
             const btn = document.querySelector('.btn-share');
             const statusEl = document.getElementById('status-msg');
@@ -430,15 +440,14 @@
             setTimeout(() => { statusEl.className = 'status-msg'; }, 4000);
         }
 
-        /* ── RESET ── */
         function resetForm() {
-            ['f-name','f-account','f-ifsc','f-amount'].forEach(id => {
+            ['f-name','f-account','f-ifsc','f-amount','f-from-account','f-note'].forEach(id => {
                 document.getElementById(id).value = '';
             });
             document.getElementById('f-plan').value    = 'Pro Plan';
             document.getElementById('f-billing').value = 'Monthly';
             document.getElementById('f-method').value  = 'UPI';
-            document.getElementById('f-status').value  = 'success'; // Revert back to Successful on clear
+            document.getElementById('f-status').value  = 'success'; 
 
             fallbackRandomDigits = String(Math.floor(1000 + Math.random() * 9000));
             const now = new Date();
